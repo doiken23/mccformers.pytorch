@@ -1,0 +1,9 @@
+.python-version
+poetry.lock
+.venv/
+__pycache__/
+
+data/
+outputs/
+results/
+scripts/

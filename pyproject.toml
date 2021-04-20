@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "mccformer"
+version = "0.1.0"
+description = "Re-implementation of MCCFormer network for change captioning"
+authors = ["Kento Doi <doi.kento@weblab.t.u-tokyo.ac.jp>"]
+
+[tool.poetry.dependencies]
+python = "^3.8.1"
+torch = "1.8.0"
+torchvision = "0.9.0"
+hydra-core = "stable"
+hydra_colorlog = "^1.0.0"
+tensorboard = "^2.5.0"
+
+[tool.poetry.dev-dependencies]
+pytest = ""
+flake8 = ""
+autopep8 = ""
+isort = ""
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
