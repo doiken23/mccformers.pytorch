@@ -12,3 +12,14 @@ def compute_accuracy(pred: Tensor, gt: Tensor, ignore: int = 0):
     tp = torch.logical_and(pred == gt, mask)
 
     return tp.sum() / mask.sum()
+
+
+def decode_seq(seq, idx_to_word):
+    words = []
+    for s in seq:
+        if s == 2:  # <START>
+            continue
+        if s == 3:  # <END>
+            break
+        words.append(idx_to_word[s])
+    return ' '.join(words)
