@@ -14,7 +14,6 @@ from hydra.utils import get_original_cwd
 from omegaconf import OmegaConf
 from torch.utils.tensorboard import SummaryWriter
 
-import utils
 from datasets import create_dataset
 from engine import evaluate, train_one_epoch
 from models import MCCFormer
@@ -94,7 +93,7 @@ def main(cfg):
     model = MCCFormer(
         encoder_type=cfg.model.encoder_type, num_tokens=num_tokens,
         feature_dim=cfg.data.feature_dim, encoder_dim=cfg.model.encoder_dim,
-        encoder_nhead=cfg.model.encoder_dim,
+        encoder_nhead=cfg.model.encoder_nhead,
         encoder_transformer_layer_num=cfg.model.encoder_transformer_layer_num,
         decoder_nhead=cfg.model.decoder_nhead,
         decoder_transformer_layer_num=cfg.model.decoder_transformer_layer_num,
@@ -144,7 +143,7 @@ def main(cfg):
         # save snapshot
         if epoch % cfg.optim.snapshot_interval == 0:
             # write the epoch losses
-            utils.save_on_master({
+            torch.save({
                 'model': model_without_multi_gpu.state_dict(),
                 'optimizer': optimizer.state_dict(),
                 'cfg': cfg,
