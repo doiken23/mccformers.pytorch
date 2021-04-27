@@ -172,6 +172,7 @@ class RCCDataset(Dataset):
             seq[:, :self.max_seq_length] = \
                 self.labels[ixl: ixl + self.seq_per_img, :self.max_seq_length]
         seq = torch.as_tensor(seq, dtype=torch.int64)
+        seq[torch.arange(self.seq_per_img), seq.argmin(1)] = self.word_to_idx['<END>']
 
         # Fetch negative sequence labels
         ix1 = self.neg_label_start_idx[img_idx]
@@ -190,6 +191,7 @@ class RCCDataset(Dataset):
             neg_seq[:, :self.max_seq_length] = \
                 self.neg_labels[ixl: ixl + self.seq_per_img, :self.max_seq_length]
         neg_seq = torch.as_tensor(neg_seq, dtype=torch.int64)
+        neg_seq[torch.arange(self.seq_per_img), neg_seq.argmin(1)] = self.word_to_idx['<END>']
 
         # Generate masks
         mask = np.zeros_like(seq)
