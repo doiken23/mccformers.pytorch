@@ -22,3 +22,10 @@ def test_rcc_dataset():
     assert isinstance(d_img_path, str)
     assert isinstance(n_img_path, str)
     assert isinstance(q_img_path, str)
+
+    for data in dataset:
+        seq = data[3]
+        neg_seq = data[4]
+
+        assert seq[0, seq.argmin(1) - 1] == 3
+        assert neg_seq[0, neg_seq.argmin(1) - 1] == 3
