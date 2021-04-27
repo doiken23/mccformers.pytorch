@@ -5,7 +5,7 @@ import pytest
 import torch
 
 from models import MCCFormer
-from models.model import MCCFormerEncoderD, MCCFormerEncoderS
+from models.model import MCCFormerEncoderD, MCCFormerEncoderS, SimpleEncoder
 
 
 @pytest.fixture
@@ -15,7 +15,7 @@ def parameters():
     before_img = torch.randn(4, 1024, 14, 14, device=device)
     after_img = torch.randn(4, 1024, 14, 14, device=device)
 
-    targets = torch.zeros(100, 4, dtype=torch.int64, device=device)
+    targets = torch.zeros(4, 100, dtype=torch.int64, device=device)
 
     return device, before_img, after_img, targets
 
@@ -42,6 +42,17 @@ def test_encoder_s(parameters):
     assert outputs.size() == (14 ** 2, 4, 2 * 512)
 
 
+def test_encoder_simple(parameters):
+    device, before_img, after_img, _ = parameters
+
+    model = SimpleEncoder(1024, 512)
+    model.to(device)
+
+    outputs = model(before_img, after_img)
+
+    assert outputs.size() == (14 ** 2, 4, 2 * 512)
+
+
 def test_mccformer(parameters):
     device, before_img, after_img, targets = parameters
 
@@ -60,4 +71,4 @@ def test_mccformer(parameters):
     outputs = model(before_img, after_img)
     assert isinstance(loss, torch.Tensor)
     assert outputs.dtype == torch.int64
-    assert outputs.size() == (100, 4)
+    assert outputs.size() == (4, 100)
