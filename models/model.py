@@ -53,6 +53,20 @@ class PositionalEncoding(nn.Module):
         return x + self.pe[:x.size(0)]
 
 
+class SimpleEncoder(nn.Module):
+    def __init__(self, feature_dim, encoder_dim, image_size=14):
+        super(SimpleEncoder, self).__init__()
+
+        self.linear = nn.Conv2d(feature_dim, encoder_dim, kernel_size=1)
+        self.positional_encoding = PositionalEncoding('fully_learnable', 2 * encoder_dim, image_size ** 2)
+
+    def forward(self, x1, x2):
+        return self.positional_encoding(torch.cat([
+            self.linear(x1).flatten(start_dim=2).permute(2, 0, 1),
+            self.linear(x2).flatten(start_dim=2).permute(2, 0, 1)
+        ], dim=2))
+
+
 class MCCFormerEncoderD(nn.Module):
     def __init__(
             self, feature_dim: int, encoder_dim: int, feature_extractor: Optional[nn.Module] = None,
@@ -69,7 +83,7 @@ class MCCFormerEncoderD(nn.Module):
         # Transformer
         encoder_layer = CoAttentionTransformerEncoderLayer(
             d_model=encoder_dim, nhead=nhead, dim_feedforward=4 * encoder_dim)
-        self.transformer = CoAttentionTransformerEncoder(encoder_layer, num_layers=2)
+        self.transformer = CoAttentionTransformerEncoder(encoder_layer, num_layers=transformer_layer_num)
 
     def forward(self, x1: Tensor, x2: Tensor) -> Tensor:
         N = len(x1)
@@ -107,7 +121,7 @@ class MCCFormerEncoderS(nn.Module):
         # Transformer
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=encoder_dim, nhead=nhead, dim_feedforward=4 * encoder_dim)
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=2)
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=transformer_layer_num)
 
     def forward(self, x1: Tensor, x2: Tensor) -> Tensor:
         N = len(x1)
@@ -151,6 +165,8 @@ class MCCFormer(nn.Module):
                 feature_dim, encoder_dim, feature_extractor,
                 image_size=image_size, nhead=encoder_nhead,
                 transformer_layer_num=encoder_transformer_layer_num)
+        elif encoder_type == 'Simple':
+            self.encoder = SimpleEncoder(feature_dim, encoder_dim, image_size=image_size)
         else:
             raise RuntimeError('Invalid encoder type. Expect "D" or "S".')
 
@@ -197,11 +213,12 @@ class MCCFormer(nn.Module):
 
         if self.training and target is None:
             raise RuntimeError('In the training mode, target should not be None.')
-        else:
+
+        if target is not None:
             target = target.transpose(0, 1)
 
         # encode visual features
-        encoded_features = self.encoder(x1, x2)
+        encoded_features = self.encoder(x1, x2)  # [H'xW', N, 2C]
 
         # decode change captions from visual features
         if self.training:
@@ -224,7 +241,7 @@ class MCCFormer(nn.Module):
                 return outputs.transpose(0, 1)
             else:
                 # predict next words one-by-one manner
-                outputs = torch.zeros(1, N, dtype=torch.int64, device=device)
+                outputs = torch.zeros(1, N, dtype=torch.int64, device=device) + 2
                 for i in range(self.max_len - 1):
                     embeddings = self.positional_encoding(self.embedding_layer(outputs))
                     tgt_mask = self.generate_square_subsequent_mask(len(outputs)).to(device)
