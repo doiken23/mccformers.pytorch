@@ -7,3 +7,5 @@ data/
 outputs/
 results/
 scripts/
+
+.vscode/
