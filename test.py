@@ -16,7 +16,7 @@ from omegaconf import OmegaConf
 from tqdm import tqdm
 
 import utils
-from datasets import create_dataset
+from datasets.cc_datasets import create_dataset
 from models import MCCFormer
 
 logger = logging.getLogger(__name__)
