@@ -14,7 +14,7 @@ from hydra.utils import get_original_cwd
 from omegaconf import OmegaConf
 from torch.utils.tensorboard import SummaryWriter
 
-from datasets.cc_datasets import create_dataset
+from datasets.cc_dataset import create_dataset
 from engine import evaluate, train_one_epoch
 from models import MCCFormer
 
