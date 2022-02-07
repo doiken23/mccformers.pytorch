@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "mccformer"
+name = "mccformers"
 version = "0.1.0"
-description = "Re-implementation of MCCFormer network for change captioning"
+description = "Re-implementation of MCCFormers for change captioning"
 authors = ["Kento Doi <doi.kento@weblab.t.u-tokyo.ac.jp>"]
 
 [tool.poetry.dependencies]
@@ -19,6 +19,7 @@ pytest = ""
 flake8 = ""
 autopep8 = ""
 isort = ""
+pre-commit = "^2.15.0"
 jupyterlab = ""
 matplotlib = ""
 
