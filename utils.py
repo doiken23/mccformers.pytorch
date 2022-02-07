@@ -1,5 +1,26 @@
+import argparse
+
 import torch
+from omegaconf import DictConfig, OmegaConf
 from torch import Tensor
+
+
+def load_configs() -> DictConfig:
+    # parse arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config", type=str, help="config file path")
+    parser.add_argument("-o", "--overrides", nargs="*", help="override options")
+    args = parser.parse_args()
+
+    # load config
+    cfg = OmegaConf.load(args.config)
+    cli = OmegaConf.from_dotlist(args.overrides)
+    cfg = OmegaConf.merge(cfg, cli)
+    OmegaConf.resolve(cfg)
+    OmegaConf.set_readonly(cfg, True)
+    # init_distributed_mode(cfg)
+
+    return cfg
 
 
 def compute_accuracy(pred: Tensor, gt: Tensor, ignore: int = 0):
