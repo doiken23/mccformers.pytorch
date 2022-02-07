@@ -47,13 +47,16 @@ class PositionalEncoding(nn.Module):
             )
 
     def forward(self, x: Tensor) -> Tensor:
-        """Inputs of forward function
+        """
+
         Args:
             x (Tensor): the sequence fed to the positional encoder model [L, N, C]
 
         Returns:
             output (Tensor): position embeddings [L, N, C]
+
         """
+
         return x + self.pe[: x.size(0)]
 
 
@@ -67,6 +70,17 @@ class SimpleEncoder(nn.Module):
         )
 
     def forward(self, x1, x2):
+        """
+
+        Args:
+            x1 (Tensor): visual feature at t1 shape of [N, 3, H, W]
+            x2 (Tensor): visual feature at t2 shape of [N, 3, H, W]
+
+        Returns:
+            outputs (Tensor): output feature shape of [H'xW', N, 2C]
+
+        """
+
         return self.positional_encoding(
             torch.cat(
                 [
@@ -79,6 +93,16 @@ class SimpleEncoder(nn.Module):
 
 
 class MCCFormerEncoderD(nn.Module):
+    """
+
+    Attributes:
+        linear (nn.Module): linear layer to create input feature from CNN feature
+        feature_extractor (Optional[nn.Module]): feature extractor
+        positional_encoding (nn.Module): positional encoder (default: 'learnable')
+        transformer (nn.Module): transformer encoder layer
+
+    """
+
     def __init__(
         self,
         feature_dim: int,
@@ -108,6 +132,17 @@ class MCCFormerEncoderD(nn.Module):
         )
 
     def forward(self, x1: Tensor, x2: Tensor) -> Tensor:
+        """
+
+        Args:
+            x1 (Tensor): visual feature at t1 shape of [N, 3, H, W]
+            x2 (Tensor): visual feature at t2 shape of [N, 3, H, W]
+
+        Returns:
+            outputs (Tensor): output feature shape of [H'xW', N, 2C]
+
+        """
+
         N = len(x1)
 
         # extract visual features from before and after images
@@ -129,6 +164,16 @@ class MCCFormerEncoderD(nn.Module):
 
 
 class MCCFormerEncoderS(nn.Module):
+    """
+
+    Attributes:
+        linear (nn.Module): linear layer to create input feature from CNN feature
+        feature_extractor (Optional[nn.Module]): feature extractor
+        positional_encoding (nn.Module): positional encoder (default: 'learnable')
+        transformer (nn.Module): transformer encoder layer
+
+    """
+
     def __init__(
         self,
         feature_dim: int,
@@ -158,6 +203,17 @@ class MCCFormerEncoderS(nn.Module):
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=transformer_layer_num)
 
     def forward(self, x1: Tensor, x2: Tensor) -> Tensor:
+        """
+
+        Args:
+            x1 (Tensor): visual feature at t1 shape of [N, 3, H, W]
+            x2 (Tensor): visual feature at t2 shape of [N, 3, H, W]
+
+        Returns:
+            outputs (Tensor): output feature shape of [H'xW', N, 2C]
+
+        """
+
         N = len(x1)
 
         # extract visual features from before and after images
@@ -258,9 +314,17 @@ class MCCFormer(nn.Module):
 
     def generate_square_subsequent_mask(self, sz: int) -> Tensor:
         """
+
         This function is copied from
             https://github.com/pytorch/pytorch/blob/e61b4fa6915a9eaba7d1f86d3f7a3c3a763052e5/
             torch/nn/modules/transformer.py#L131-L137
+
+        Args:
+            sz (int): size of sequence
+
+        Returns:
+            mask (Tensor): mask used in Transformer layer
+
         """
         mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
         mask = (
@@ -333,90 +397,3 @@ class MCCFormer(nn.Module):
                     outputs = torch.cat([outputs, predicted.unsqueeze(0)])
 
                 return outputs.transpose(0, 1)
-        """
-
-        Args:
-            encoder_type:
-            num_tokens:
-            feature_extractor:
-            feature_dim:
-            encoder_dim:
-            image_size:
-            encoder_nhead:
-            encoder_transformer_layer_num:
-            decoder_nhead:
-            decoder_transformer_layer_num:
-            pe_type:
-            dropout:
-            max_len:
-            self:
-            sz:
-            self:
-            x1:
-            x2:
-            target:
-
-        Returns:
-
-
-        Raises:
-            RuntimeError:
-        """
-        """
-
-        Args:
-            encoder_type:
-            num_tokens:
-            feature_extractor:
-            feature_dim:
-            encoder_dim:
-            image_size:
-            encoder_nhead:
-            encoder_transformer_layer_num:
-            decoder_nhead:
-            decoder_transformer_layer_num:
-            pe_type:
-            dropout:
-            max_len:
-            self:
-            sz:
-            self:
-            x1:
-            x2:
-            target:
-
-        Returns:
-
-
-        Raises:
-            RuntimeError:
-        """
-        """
-
-        Args:
-            encoder_type:
-            num_tokens:
-            feature_extractor:
-            feature_dim:
-            encoder_dim:
-            image_size:
-            encoder_nhead:
-            encoder_transformer_layer_num:
-            decoder_nhead:
-            decoder_transformer_layer_num:
-            pe_type:
-            dropout:
-            max_len:
-            self:
-            sz:
-            self:
-            x1:
-            x2:
-            target:
-
-        Returns:
-
-
-        Raises:
-            RuntimeError:
-        """
