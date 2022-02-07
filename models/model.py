@@ -18,6 +18,7 @@ class PositionalEncoding(nn.Module):
             which is chosen from ['fully_learnable', 'sinusoidal']
         d_model (int): embed dim (required).
         max_len (int): max. length of the incoming sequence (default=5000).
+
     Examples:
         >>> pos_encoder = PositionalEncoding(d_model, max_len=100)
     """
@@ -49,6 +50,7 @@ class PositionalEncoding(nn.Module):
         """Inputs of forward function
         Args:
             x (Tensor): the sequence fed to the positional encoder model [L, N, C]
+
         Returns:
             output (Tensor): position embeddings [L, N, C]
         """
@@ -177,6 +179,19 @@ class MCCFormerEncoderS(nn.Module):
 
 
 class MCCFormer(nn.Module):
+    """
+
+    Attributes:
+        encoder (nn.Module): encoder module
+        max_len (int): max length of captions
+        positional_encoding (nn.Module): positional encoding layer for decoder
+        dropout (nn.Module): dropout layer in decoder
+        decoder (nn.Module): caption decoder
+        embedding_layer (nn.Module): word embedding layer
+        cap_predictor (nn.Module): linear layer that predicts words
+
+    """
+
     def __init__(
         self,
         encoder_type: str,
@@ -191,9 +206,10 @@ class MCCFormer(nn.Module):
         # parameters of decoder
         decoder_nhead: int = 4,
         decoder_transformer_layer_num: int = 2,
-        pe_type: str = "fully_learnable",
+        pe_type: str = "sinusoidal",
+        dropout: float = 0.2,
         max_len=20,
-    ):
+    ) -> None:
         super(MCCFormer, self).__init__()
 
         # set encoder
@@ -229,9 +245,7 @@ class MCCFormer(nn.Module):
 
         # position embeddings
         self.max_len = max_len
-        self.positional_encoding = PositionalEncoding(
-            "fully_learnable", decoder_dim, max_len=max_len
-        )
+        self.positional_encoding = PositionalEncoding(pe_type, decoder_dim, max_len=max_len)
 
         # embedding layer
         self.embedding_layer = nn.Embedding(
@@ -240,6 +254,7 @@ class MCCFormer(nn.Module):
 
         # caption predictor
         self.cap_predictor = nn.Linear(decoder_dim, num_tokens)
+        self.dropout = nn.Dropout(p=dropout)
 
     def generate_square_subsequent_mask(self, sz: int) -> Tensor:
         """
@@ -255,6 +270,7 @@ class MCCFormer(nn.Module):
 
     def forward(self, x1: Tensor, x2: Tensor, target: Optional[Tensor] = None) -> Tensor:
         """
+
         Args:
             x1 (Tensor): before images [N, 3, H, W]
             x2 (Tensor): after images [N, 3, H, W]
@@ -262,6 +278,8 @@ class MCCFormer(nn.Module):
 
         Returns:
             loss (Tensor): cross entropy loss
+            outputs (Tensor): predicted captions
+
         """
         N = len(x1)
         device = x1.device
@@ -282,8 +300,8 @@ class MCCFormer(nn.Module):
             embeddings = self.positional_encoding(self.embedding_layer(target[:-1]))
             tgt_mask = self.generate_square_subsequent_mask(len(target) - 1).to(device)
             outputs = self.cap_predictor(
-                self.decoder(embeddings, encoded_features, tgt_mask=tgt_mask)
-            )
+                self.dropout(self.decoder(embeddings, encoded_features, tgt_mask=tgt_mask))
+            )  # [cap_length, N, num_tokens]
 
             # compute loss
             loss = F.cross_entropy(
@@ -315,3 +333,90 @@ class MCCFormer(nn.Module):
                     outputs = torch.cat([outputs, predicted.unsqueeze(0)])
 
                 return outputs.transpose(0, 1)
+        """
+
+        Args:
+            encoder_type:
+            num_tokens:
+            feature_extractor:
+            feature_dim:
+            encoder_dim:
+            image_size:
+            encoder_nhead:
+            encoder_transformer_layer_num:
+            decoder_nhead:
+            decoder_transformer_layer_num:
+            pe_type:
+            dropout:
+            max_len:
+            self:
+            sz:
+            self:
+            x1:
+            x2:
+            target:
+
+        Returns:
+
+
+        Raises:
+            RuntimeError:
+        """
+        """
+
+        Args:
+            encoder_type:
+            num_tokens:
+            feature_extractor:
+            feature_dim:
+            encoder_dim:
+            image_size:
+            encoder_nhead:
+            encoder_transformer_layer_num:
+            decoder_nhead:
+            decoder_transformer_layer_num:
+            pe_type:
+            dropout:
+            max_len:
+            self:
+            sz:
+            self:
+            x1:
+            x2:
+            target:
+
+        Returns:
+
+
+        Raises:
+            RuntimeError:
+        """
+        """
+
+        Args:
+            encoder_type:
+            num_tokens:
+            feature_extractor:
+            feature_dim:
+            encoder_dim:
+            image_size:
+            encoder_nhead:
+            encoder_transformer_layer_num:
+            decoder_nhead:
+            decoder_transformer_layer_num:
+            pe_type:
+            dropout:
+            max_len:
+            self:
+            sz:
+            self:
+            x1:
+            x2:
+            target:
+
+        Returns:
+
+
+        Raises:
+            RuntimeError:
+        """
