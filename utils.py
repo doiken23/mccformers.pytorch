@@ -22,4 +22,4 @@ def decode_seq(seq, idx_to_word):
         if s == 3:  # <END>
             break
         words.append(idx_to_word[s])
-    return ' '.join(words)
+    return " ".join(words)

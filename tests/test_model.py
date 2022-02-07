@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import pytest
-
 import torch
 
 from models import MCCFormer
@@ -10,7 +9,7 @@ from models.model import MCCFormerEncoderD, MCCFormerEncoderS, SimpleEncoder
 
 @pytest.fixture
 def parameters():
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     before_img = torch.randn(4, 1024, 14, 14, device=device)
     after_img = torch.randn(4, 1024, 14, 14, device=device)
@@ -56,7 +55,7 @@ def test_encoder_simple(parameters):
 def test_mccformer(parameters):
     device, before_img, after_img, targets = parameters
 
-    model = MCCFormer('D', 1000, max_len=100)
+    model = MCCFormer("D", 1000, max_len=100)
     model.to(device)
 
     # check train model

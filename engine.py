@@ -10,7 +10,7 @@ import utils
 
 def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, logger=None):
     model.train()
-    header = '[Train] Epoch: [{}]'.format(epoch)
+    header = "[Train] Epoch: [{}]".format(epoch)
     total_loss = 0
 
     start_time = time.time()
@@ -55,20 +55,23 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, lo
 
         # log the iteration losses
         if logger is not None and (i % print_freq == 0 or i == len(data_loader)):
-            logger.info('{} (iter {} / {})'.format(header, i, len(data_loader)))
-            logger.info('{} loss: {}'.format(header, loss_value))
+            logger.info("{} (iter {} / {})".format(header, i, len(data_loader)))
+            logger.info("{} loss: {}".format(header, loss_value))
 
     # total epoch time
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     if logger is not None:
-        logger.info('{} Total time: {} ({:.4f} s /it)'.format(
-            header, total_time_str, total_time / len(data_loader)))
+        logger.info(
+            "{} Total time: {} ({:.4f} s /it)".format(
+                header, total_time_str, total_time / len(data_loader)
+            )
+        )
 
     # average loss
     loss_avg = total_loss / len(data_loader)
     if logger is not None:
-        logger.info('{} Loss average: {:.4f}'.format(header, loss_avg))
+        logger.info("{} Loss average: {:.4f}".format(header, loss_avg))
 
     return loss_avg
 
@@ -76,7 +79,7 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, lo
 @torch.no_grad()
 def evaluate(model, data_loader, device, epoch, print_freq, logger=None):
     model.eval()
-    header = '[Evaluate] Epoch: [{}]'.format(epoch)
+    header = "[Evaluate] Epoch: [{}]".format(epoch)
     total_acc = 0
 
     start_time = time.time()
@@ -95,19 +98,22 @@ def evaluate(model, data_loader, device, epoch, print_freq, logger=None):
 
         # log the iteration losses
         if logger is not None and (i % print_freq == 0 or i == len(data_loader)):
-            logger.info('{} (iter {} / {})'.format(header, i, len(data_loader)))
-            logger.info('{} accuracy: {:.2f} %'.format(header, acc * 100))
+            logger.info("{} (iter {} / {})".format(header, i, len(data_loader)))
+            logger.info("{} accuracy: {:.2f} %".format(header, acc * 100))
 
     # total epoch time
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     if logger is not None:
-        logger.info('{} Total time: {} ({:.4f} s /it)'.format(
-            header, total_time_str, total_time / len(data_loader)))
+        logger.info(
+            "{} Total time: {} ({:.4f} s /it)".format(
+                header, total_time_str, total_time / len(data_loader)
+            )
+        )
 
     # average accuracy
     acc_avg = total_acc / len(data_loader)
     if logger is not None:
-        logger.info('{} Accuracy average: {:.2f}'.format(header, acc_avg))
+        logger.info("{} Accuracy average: {:.2f}".format(header, acc_avg))
 
     return acc_avg
