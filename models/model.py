@@ -69,7 +69,7 @@ class SimpleEncoder(nn.Module):
             "fully_learnable", 2 * encoder_dim, image_size**2
         )
 
-    def forward(self, x1, x2):
+    def forward(self, x1: Tensor, x2: Tensor) -> Tensor:
         """
 
         Args:
