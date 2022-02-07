@@ -27,7 +27,7 @@ def test_encoder_d(parameters):
 
     outputs = model(before_img, after_img)
 
-    assert outputs.size() == (14 ** 2, 4, 2 * 512)
+    assert outputs.size() == (14**2, 4, 2 * 512)
 
 
 def test_encoder_s(parameters):
@@ -38,7 +38,7 @@ def test_encoder_s(parameters):
 
     outputs = model(before_img, after_img)
 
-    assert outputs.size() == (14 ** 2, 4, 2 * 512)
+    assert outputs.size() == (14**2, 4, 2 * 512)
 
 
 def test_encoder_simple(parameters):
@@ -49,7 +49,7 @@ def test_encoder_simple(parameters):
 
     outputs = model(before_img, after_img)
 
-    assert outputs.size() == (14 ** 2, 4, 2 * 512)
+    assert outputs.size() == (14**2, 4, 2 * 512)
 
 
 def test_mccformer(parameters):

@@ -66,7 +66,7 @@ class SimpleEncoder(nn.Module):
 
         self.linear = nn.Conv2d(feature_dim, encoder_dim, kernel_size=1)
         self.positional_encoding = PositionalEncoding(
-            "fully_learnable", 2 * encoder_dim, image_size ** 2
+            "fully_learnable", 2 * encoder_dim, image_size**2
         )
 
     def forward(self, x1, x2):
@@ -120,7 +120,7 @@ class MCCFormerEncoderD(nn.Module):
 
         # position embedding
         self.positional_encoding = PositionalEncoding(
-            "fully_learnable", encoder_dim, image_size ** 2
+            "fully_learnable", encoder_dim, image_size**2
         )
 
         # Transformer
@@ -193,7 +193,7 @@ class MCCFormerEncoderS(nn.Module):
 
         # position embedding
         self.positional_encoding = PositionalEncoding(
-            "fully_learnable", encoder_dim, 2 * image_size ** 2
+            "fully_learnable", encoder_dim, 2 * image_size**2
         )
 
         # Transformer
@@ -227,8 +227,8 @@ class MCCFormerEncoderS(nn.Module):
         # apply Transformer to before and after visual features
         features = self.transformer(features)
         before_features, after_features = (
-            features[: self.image_size ** 2],
-            features[self.image_size ** 2 :],
+            features[: self.image_size**2],
+            features[self.image_size**2 :],
         )  # [H'xW', N, C]
 
         return torch.cat([before_features, after_features], dim=2)  # [H'xW', N, 2C]

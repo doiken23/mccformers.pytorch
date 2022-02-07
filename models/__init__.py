@@ -1,1 +1,1 @@
-from models.model import MCCFormer
+from models.model import MCCFormer  # NOQA
