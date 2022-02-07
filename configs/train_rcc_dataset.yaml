@@ -1,0 +1,37 @@
+data:
+  dataset: rcc_dataset
+  path: data/clevr
+
+  image_size: 14
+  feature_dim: 1024
+
+  batch_size: 128
+  num_workers: 4
+
+
+model:
+  # encoder
+  encoder_type: D  # D or S
+  encoder_dim: 512
+  encoder_nhead: 4
+  encoder_transformer_layer_num: 2
+
+  # decoder
+  decoder_nhead: 4
+  decoder_transformer_layer_num: 2
+  pe_type: fully_learnable
+
+
+optim:
+  lr: 0.0001
+  momentum: 0.9
+  beta1: 0.9
+  beta2: 0.99
+
+  print_freq: 100
+  snapshot_interval: 10
+  epochs: 40
+
+output_dir: outputs/${data.dataset}/mccformers_${model.encoder_type}/
+test_only: false
+resume: null
