@@ -8,4 +8,5 @@ outputs/
 results/
 scripts/
 
+.DS_Store
 .vscode/
