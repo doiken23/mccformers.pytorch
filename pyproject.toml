@@ -23,6 +23,13 @@ pre-commit = "^2.15.0"
 jupyterlab = ""
 matplotlib = ""
 
+[tool.black]
+line-length = 99
+
+[tool.isort]
+profile = "black"
+line_length = 99
+
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
