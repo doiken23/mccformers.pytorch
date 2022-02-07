@@ -63,7 +63,8 @@ class CaptionDataset(Dataset):
                     ]
                 )
                 return img1, img2, caption, caplen, all_captions
-            if self.dataset_name == "CCHANGE" or self.dataset_name == "STD":
+
+            elif self.dataset_name == "CCHANGE" or self.dataset_name == "STD":
                 return img1, img2, caption, caplen, caption
 
     def __len__(self):
