@@ -8,19 +8,25 @@ import torch
 import utils
 
 
-def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, logger=None):
+def train_one_epoch(
+    model, optimizer, dataset_name, data_loader, device, epoch, print_freq, logger=None
+):
     model.train()
     header = "[Train] Epoch: [{}]".format(epoch)
     total_loss = 0
 
     start_time = time.time()
     for i, data in enumerate(data_loader, 1):
-        d_feature, n_feature, q_feature, target, neg_target, _, _, _, _, _, _, _ = data
-        d_feature = d_feature.to(device)
-        n_feature = n_feature.to(device)
-        q_feature = q_feature.to(device)
-        target = target.squeeze(1).to(device)
-        neg_target = neg_target.squeeze(1).to(device)
+        if dataset_name == "rcc_dataset":
+            d_feature, n_feature, q_feature, target, neg_target, _, _, _, _, _, _, _ = data
+            d_feature = d_feature.to(device)
+            n_feature = n_feature.to(device)
+            q_feature = q_feature.to(device)
+            target = target.squeeze(1).to(device)
+            neg_target = neg_target.squeeze(1).to(device)
+
+        elif dataset_name == "original_cmc_dataset":
+            d_feature, q_feature, target, _ = data
 
         # positive pairs
         loss = model(d_feature, q_feature, target).mean()
@@ -38,20 +44,21 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, lo
         loss.backward()
         optimizer.step()
 
-        # negative pairs
-        loss = model(d_feature, n_feature, neg_target).mean()
-        loss_value += loss.item()
-        total_loss += loss_value
+        if dataset_name == "rcc_dataset":
+            # negative pairs
+            loss = model(d_feature, n_feature, neg_target).mean()
+            loss_value += loss.item()
+            total_loss += loss_value
 
-        if not math.isfinite(loss_value):
-            print("Loss is {}, stopping training".format(loss_value))
-            print(loss_value)
-            sys.exit(1)
+            if not math.isfinite(loss_value):
+                print("Loss is {}, stopping training".format(loss_value))
+                print(loss_value)
+                sys.exit(1)
 
-        # optimizer
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+            # optimizer
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
         # log the iteration losses
         if logger is not None and (i % print_freq == 0 or i == len(data_loader)):
@@ -77,19 +84,21 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, lo
 
 
 @torch.no_grad()
-def evaluate(model, data_loader, device, epoch, print_freq, logger=None):
+def evaluate(model, dataset_name, data_loader, device, epoch, print_freq, logger=None):
     model.eval()
     header = "[Evaluate] Epoch: [{}]".format(epoch)
     total_acc = 0
 
     start_time = time.time()
     for i, data in enumerate(data_loader, 1):
-        d_feature, n_feature, q_feature, target, neg_target, _, _, _, _, _, _, _ = data
-        d_feature = d_feature.to(device)
-        n_feature = n_feature.to(device)
-        q_feature = q_feature.to(device)
-        target = target.squeeze(1).to(device)
-        neg_target = neg_target.squeeze(1).to(device)
+        if dataset_name == "rcc_dataset":
+            d_feature, _, q_feature, target, _, _, _, _, _, _, _, _ = data
+            d_feature = d_feature.to(device)
+            q_feature = q_feature.to(device)
+            target = target.squeeze(1).to(device)
+
+        elif dataset_name == "original_cmc_dataset":
+            d_feature, q_feature, target, _, _ = data
 
         preds = model(d_feature, q_feature, target)
 
