@@ -27,6 +27,9 @@ def train_one_epoch(
 
         elif dataset_name == "original_cmc_dataset":
             d_feature, q_feature, target, _ = data
+            d_feature = d_feature.to(device)
+            q_feature = q_feature.to(device)
+            target = target.to(device)
 
         # positive pairs
         loss = model(d_feature, q_feature, target).mean()
@@ -85,6 +88,7 @@ def train_one_epoch(
 
 @torch.no_grad()
 def evaluate(model, dataset_name, data_loader, device, epoch, print_freq, logger=None):
+    cpu_device = torch.device("cpu")
     model.eval()
     header = "[Evaluate] Epoch: [{}]".format(epoch)
     total_acc = 0
@@ -99,10 +103,13 @@ def evaluate(model, dataset_name, data_loader, device, epoch, print_freq, logger
 
         elif dataset_name == "original_cmc_dataset":
             d_feature, q_feature, target, _, _ = data
+            d_feature = d_feature.to(device)
+            q_feature = q_feature.to(device)
 
         preds = model(d_feature, q_feature, target)
+        preds = preds.to(cpu_device)
 
-        acc = utils.compute_accuracy(preds, target[:, 1:])
+        acc = utils.compute_accuracy(preds, target[:, 1:].to(cpu_device))
         total_acc += acc
 
         # log the iteration losses
