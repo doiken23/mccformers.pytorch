@@ -14,15 +14,15 @@ class CaptionDataset(Dataset):
         self.split = split
         assert self.split in {"TRAIN", "VAL", "TEST"}
 
-        self.h1 = h5py.File(
+        with h5py.File(
             os.path.join(data_folder, self.split + "_IMAGE_FEATURES_1_" + data_name + ".h5"), "r"
-        )
-        self.imgs1 = self.h1["images_features"]
+        ) as h1:
+            self.imgs1 = h1["images_features"][:]
 
-        self.h2 = h5py.File(
+        with h5py.File(
             os.path.join(data_folder, self.split + "_IMAGE_FEATURES_2_" + data_name + ".h5"), "r"
-        )
-        self.imgs2 = self.h2["images_features"]
+        ) as h2:
+            self.imgs2 = h2["images_features"][:]
 
         self.cpi = captions_per_image
 
