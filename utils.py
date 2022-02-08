@@ -1,4 +1,9 @@
 import argparse
+import logging
+import os
+from datetime import datetime
+from logging import DEBUG, INFO, NOTSET, FileHandler, StreamHandler
+from typing import Union
 
 import torch
 from omegaconf import DictConfig, OmegaConf
@@ -21,6 +26,21 @@ def load_configs() -> DictConfig:
     # init_distributed_mode(cfg)
 
     return cfg
+
+
+def create_logger(output_dir: Union[str, bytes, os.PathLike]):
+    # stream handler
+    stream_handler = StreamHandler()
+    stream_handler.setLevel(INFO)
+
+    # file handler
+    file_handler = FileHandler(
+        str(output_dir.joinpath("log_{}.log".format(datetime.now().strftime("%Y%m%d%H%M%S"))))
+    )
+    file_handler.setLevel(DEBUG)
+
+    # root logger
+    logging.basicConfig(level=NOTSET, handlers=[stream_handler, file_handler])
 
 
 def compute_accuracy(pred: Tensor, gt: Tensor, ignore: int = 0):

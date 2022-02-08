@@ -19,9 +19,6 @@ from datasets.original_cmc_dataset import CaptionDataset
 from engine import evaluate, train_one_epoch
 from models import MCCFormer
 
-logger = logging.getLogger(__name__)
-coloredlogs.install(level="INFO", logger=logger)
-
 # set random seed
 seed = 23  # It is my favorite number and doesn't mean anything in particular.
 random.seed(seed)
@@ -44,12 +41,17 @@ g.manual_seed(seed)
 def main() -> None:
     # load configuration
     cfg = utils.load_configs()
-    logger.info(OmegaConf.to_yaml(cfg))
 
     # prepare output directory
     output_dir = Path(cfg.output_dir)
     output_dir.mkdir(exist_ok=True, parents=True)
     OmegaConf.save(cfg, output_dir.joinpath("config.yaml"))
+
+    # logger
+    utils.create_logger(output_dir)
+    logger = logging.getLogger(__name__)
+    coloredlogs.install(level="INFO", logger=logger)
+    logger.info(OmegaConf.to_yaml(cfg))
 
     # set device
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -95,6 +97,7 @@ def main() -> None:
             shuffle=True,
             num_workers=cfg.data.num_workers,
             drop_last=True,
+            pin_memory=True,
         )
         val_loader = torch.utils.data.DataLoader(
             val_dataset,
