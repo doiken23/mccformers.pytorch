@@ -4,95 +4,78 @@ import datetime
 import json
 import logging
 import time
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
-import hydra
+import coloredlogs
 import torch
-from hydra.core.config_store import ConfigStore
-from hydra.utils import get_original_cwd
 from omegaconf import OmegaConf
 from tqdm import tqdm
 
 import utils
 from datasets.cc_dataset import create_dataset
+from datasets.original_cmc_dataset import CaptionDataset
 from models import MCCFormer
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class DataConfig:
-    dataset: str = "rcc_dataset"
+def main() -> None:
+    # load configuration
+    cfg = utils.load_configs()
 
-    image_size: int = 14
-    feature_dim: int = 1024
+    # prepare output directory
+    output_dir = Path(cfg.output_dir)
+    output_dir.mkdir(exist_ok=True, parents=True)
+    OmegaConf.save(cfg, output_dir.joinpath("config.yaml"))
 
-    batch_size: int = 128
-    num_workers: int = 4
-
-
-@dataclass
-class ModelConfig:
-    encoder_type: str = "D"  # D or S
-    encoder_dim: int = 512
-    encoder_nhead: int = 4
-    encoder_transformer_layer_num: int = 2
-
-    decoder_nhead: int = 4
-    decoder_transformer_layer_num: int = 2
-    pe_type: str = "fully_learnable"
-
-
-@dataclass
-class OptimConfig:
-    # parameter of optimizer
-    lr: float = 0.0001
-    momentum: float = 0.9
-    beta1: float = 0.9
-    beta2: float = 0.99
-
-    # parameter of training steps
-    print_freq: int = 100
-    snapshot_interval: int = 10
-    epochs: int = 40
-
-
-@dataclass
-class Config:
-    data: DataConfig = DataConfig()
-    model: ModelConfig = ModelConfig()
-    optim: OptimConfig = OptimConfig()
-
-    test_only: bool = False
-    resume: Optional[str] = None
-
-
-cs = ConfigStore.instance()
-cs.store(name="config", node=Config)
-
-
-@hydra.main(config_name="config")
-def main(cfg):
+    # logger
+    utils.create_logger(output_dir)
+    logger = logging.getLogger(__name__)
+    coloredlogs.install(level="INFO", logger=logger)
     logger.info(OmegaConf.to_yaml(cfg))
 
     # set device
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    cpu_device = torch.device("cpu")
 
     # Data loading code
     logger.info("Creating datasets and data loaders")
-    test_dataset, test_loader = create_dataset(
-        Path(get_original_cwd()).joinpath("data"),
-        "test",
-        batch_size=cfg.data.batch_size,
-        seq_per_img=1,
-        num_workers=cfg.data.num_workers,
-    )
+    if cfg.data.dataset == "rcc_dataset":
+        test_dataset, test_loader = create_dataset(
+            Path.cwd().joinpath("data"),
+            "test",
+            batch_size=1,
+            seq_per_img=1,
+            num_workers=cfg.data.num_workers,
+        )
+        num_tokens = test_dataset.vocab_size
+        max_seq_length = test_dataset.max_seq_length
+    elif cfg.data.dataset == "original_cmc_dataset":
+        test_dataset = CaptionDataset(
+            Path.cwd().joinpath(cfg.data.path),
+            cfg.data.data_name,
+            "TEST",
+            cfg.data.captions_per_image,
+            "MOSCC",
+        )
+        test_loader = torch.utils.data.DataLoader(
+            test_dataset,
+            batch_size=1,
+            shuffle=False,
+            num_workers=cfg.data.num_workers,
+            drop_last=False,
+        )
+
+        with Path.cwd().joinpath(cfg.data.path, "WORDMAP_{}.json".format(cfg.data.data_name)).open(
+            "r"
+        ) as f:
+            vocab = json.load(f)
+        idx_to_word = {v: k for k, v in vocab.items()}
+        num_tokens = len(vocab)
+        max_seq_length = 99
 
     # prepare model
     logger.info("Creating model")
-    num_tokens = test_dataset.vocab_size
     model = MCCFormer(
         encoder_type=cfg.model.encoder_type,
         num_tokens=num_tokens,
@@ -103,7 +86,7 @@ def main(cfg):
         decoder_nhead=cfg.model.decoder_nhead,
         decoder_transformer_layer_num=cfg.model.decoder_transformer_layer_num,
         pe_type=cfg.model.pe_type,
-        max_len=test_dataset.max_seq_length,
+        max_len=max_seq_length,
     )
     model.to(device)
     model.eval()
@@ -111,7 +94,7 @@ def main(cfg):
     # load pre-trained model
     if cfg.resume is None:
         exit()
-    checkpoint = torch.load(Path(get_original_cwd()).joinpath(cfg.resume), map_location="cpu")
+    checkpoint = torch.load(Path.cwd().joinpath(cfg.resume), map_location="cpu")
     model.load_state_dict(checkpoint["model"])
 
     # predict captions
@@ -119,43 +102,62 @@ def main(cfg):
     result_captions_neg = []
     start_time = time.time()
     with torch.no_grad():
-        for i, data in enumerate(tqdm(test_loader), 1):
-            (
-                d_features,
-                n_features,
-                q_features,
-                targets,
-                neg_targets,
-                _,
-                _,
-                _,
-                _,
-                d_img_paths,
-                ncs_img_paths,
-                sc_feats,
-            ) = data
-            d_features = d_features.to(device)
-            n_features = n_features.to(device)
-            q_features = q_features.to(device)
-            batch_size = len(d_features)
+        for i, data in enumerate(tqdm(test_loader)):
+            if cfg.data.dataset == "rcc_dataset":
+                (
+                    d_feature,
+                    n_feature,
+                    q_feature,
+                    targets,
+                    neg_targets,
+                    _,
+                    _,
+                    _,
+                    _,
+                    d_img_paths,
+                    ncs_img_paths,
+                    sc_feats,
+                ) = data
+                d_feature = d_feature.to(device)
+                n_feature = n_feature.to(device)
+                q_feature = q_feature.to(device)
 
-            outputs_pos = model(d_features, q_features)
-            outputs_neg = model(d_features, n_features)
-
-            for j in range(batch_size):
-                caption_pos = utils.decode_seq(outputs_pos[j].tolist(), test_dataset.idx_to_word)
-                caption_neg = utils.decode_seq(outputs_neg[j].tolist(), test_dataset.idx_to_word)
-                image_id = d_img_paths[j].split("_")[-1]
-
+                outputs_pos = model(d_feature, q_feature)
+                caption_pos = utils.decode_seq(
+                    outputs_pos.squeeze().to(cpu_device).tolist(), test_dataset.idx_to_word
+                )
+                image_id = d_img_paths[0].split("_")[-1]
                 result_captions_pos.append({"caption": caption_pos, "image_id": image_id})
+
+                outputs_neg = model(d_feature, n_feature)
+                caption_neg = utils.decode_seq(outputs_neg[0].tolist(), test_dataset.idx_to_word)
                 result_captions_neg.append({"caption": caption_neg, "image_id": image_id + "_n"})
+
+            if cfg.data.dataset == "original_cmc_dataset":
+                if i % cfg.data.captions_per_image != 0:
+                    continue
+
+                d_feature, q_feature, target, _, _ = data
+                d_feature = d_feature.to(device)
+                q_feature = q_feature.to(device)
+
+                output = model(d_feature, q_feature, start_idx=vocab["<start>"])
+                output = output.squeeze().to(cpu_device).tolist()
+                output = utils.decode_seq(
+                    output,
+                    idx_to_word,
+                    start_idx=vocab["<start>"],
+                    end_idx=vocab["<end>"],
+                    pad_idx=vocab["<pad>"],
+                )
+
+                result_captions_pos.append({"caption": output, "image_id": i + 1})
+
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     logger.info("Test time {}".format(total_time_str))
 
     # save results
-    output_dir = Path.cwd().joinpath("results", "test")
-    output_dir.mkdir(parents=True, exist_ok=True)
     with output_dir.joinpath("sc_results.json").open("w") as f:
         json.dump(result_captions_pos, f)
     with output_dir.joinpath("nsc_results.json").open("w") as f:
