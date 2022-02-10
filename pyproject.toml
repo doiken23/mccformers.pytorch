@@ -13,6 +13,7 @@ tensorboard = "^2.5.0"
 tqdm = ""
 coloredlogs = ""
 omegaconf = ""
+pycocoevalcap = "^1.2"
 
 [tool.poetry.dev-dependencies]
 pytest = ""
