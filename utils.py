@@ -55,12 +55,14 @@ def compute_accuracy(pred: Tensor, gt: Tensor, ignore: int = 0):
     return tp.sum() / mask.sum()
 
 
-def decode_seq(seq, idx_to_word):
+def decode_seq(seq, idx_to_word, start_idx=2, end_idx=3, pad_idx=None):
     words = []
     for s in seq:
-        if s == 2:  # <START>
+        if s == start_idx:  # <START>
             continue
-        if s == 3:  # <END>
+        if s == end_idx:  # <END>
             break
+        if pad_idx is not None and s == pad_idx:  # <PAD>
+            continue
         words.append(idx_to_word[s])
     return " ".join(words)
