@@ -332,13 +332,16 @@ class MCCFormer(nn.Module):
         )
         return mask
 
-    def forward(self, x1: Tensor, x2: Tensor, target: Optional[Tensor] = None) -> Tensor:
+    def forward(
+        self, x1: Tensor, x2: Tensor, target: Optional[Tensor] = None, start_idx=0
+    ) -> Tensor:
         """
 
         Args:
             x1 (Tensor): before images [N, 3, H, W]
             x2 (Tensor): after images [N, 3, H, W]
             target (Optional[Tensor]): change captions [N, L]
+            start_idx (int): index of <EOS>
 
         Returns:
             loss (Tensor): cross entropy loss
@@ -386,7 +389,7 @@ class MCCFormer(nn.Module):
                 return outputs.transpose(0, 1)
             else:
                 # predict next words one-by-one manner
-                outputs = torch.zeros(1, N, dtype=torch.int64, device=device) + 2
+                outputs = torch.zeros(1, N, dtype=torch.int64, device=device) + start_idx
                 for i in range(self.max_len - 1):
                     embeddings = self.positional_encoding(self.embedding_layer(outputs))
                     tgt_mask = self.generate_square_subsequent_mask(len(outputs)).to(device)
