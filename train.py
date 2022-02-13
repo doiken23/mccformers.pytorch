@@ -3,6 +3,7 @@
 import datetime
 import json
 import logging
+import pickle
 import random
 import time
 from pathlib import Path
@@ -15,6 +16,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 import utils
 from datasets.cc_dataset import create_dataset
+from datasets.cmc_dataset import CLEVRMultiChangeDataset
 from datasets.original_cmc_dataset import CaptionDataset
 from engine import evaluate, train_one_epoch
 from models import MCCFormer
@@ -113,6 +115,48 @@ def main() -> None:
             vocab = json.load(f)
         num_tokens = len(vocab)
         max_seq_length = 99
+
+    elif cfg.data.dataset == "cmc_dataset":
+        max_seq_length = 99
+        with Path.cwd().joinpath(cfg.data.path, "vocab.pkl").open("rb") as f:
+            vocab = pickle.load(f)
+        target_transform = utils.Word2Id(max_seq_length, vocab)
+        num_tokens = len(vocab)
+
+        dataset = CLEVRMultiChangeDataset(
+            Path.cwd().joinpath(cfg.data.path),
+            split="train",
+            use_feature=True,
+            choose_one_caption=True,
+            img_transform=None,
+            target_transform=target_transform,
+        )
+        val_dataset = CLEVRMultiChangeDataset(
+            Path.cwd().joinpath(cfg.data.path),
+            split="val",
+            use_feature=True,
+            choose_one_caption=True,
+            img_transform=None,
+            target_transform=target_transform,
+        )
+
+        loader = torch.utils.data.DataLoader(
+            dataset,
+            batch_size=cfg.data.batch_size,
+            shuffle=True,
+            num_workers=cfg.data.num_workers,
+            drop_last=True,
+            pin_memory=True,
+        )
+        val_loader = torch.utils.data.DataLoader(
+            val_dataset,
+            batch_size=cfg.data.batch_size,
+            shuffle=False,
+            num_workers=cfg.data.num_workers,
+            drop_last=False,
+        )
+    logger.info("Length of training dataset: {}".format(len(dataset)))
+    logger.info("Length of validataion dataset: {}".format(len(val_dataset)))
 
     logger.info("Creating model")
     model = MCCFormer(

@@ -31,6 +31,12 @@ def train_one_epoch(
             q_feature = q_feature.to(device)
             target = target.to(device)
 
+        elif dataset_name == "cmc_dataset":
+            d_feature, q_feature, target = data
+            d_feature = d_feature.to(device)
+            q_feature = q_feature.to(device)
+            target = target.to(device)
+
         # positive pairs
         loss = model(d_feature, q_feature, target).mean()
 
@@ -103,6 +109,11 @@ def evaluate(model, dataset_name, data_loader, device, epoch, print_freq, logger
 
         elif dataset_name == "original_cmc_dataset":
             d_feature, q_feature, target, _, _ = data
+            d_feature = d_feature.to(device)
+            q_feature = q_feature.to(device)
+
+        elif dataset_name == "cmc_dataset":
+            d_feature, q_feature, target = data
             d_feature = d_feature.to(device)
             q_feature = q_feature.to(device)
 

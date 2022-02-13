@@ -66,3 +66,41 @@ def decode_seq(seq, idx_to_word, start_idx=2, end_idx=3, pad_idx=None):
             continue
         words.append(idx_to_word[s])
     return " ".join(words)
+
+
+class Vocabulary(object):
+    def __init__(self) -> None:
+        self.word2idx = {}
+        self.idx2word = {}
+        self.idx = 0
+
+    def add_word(self, word):
+        if word not in self.word2idx:
+            self.word2idx[word] = self.idx
+            self.idx2word[self.idx] = word
+            self.idx += 1
+
+    def __call__(self, word):
+        if word not in self.word2idx:
+            return self.word2idx["<UNK>"]
+        return self.word2idx[word]
+
+    def __len__(self):
+        return len(self.word2idx)
+
+
+class Word2Id:
+    """
+    各トークンをボキャブラリーを用いてidに変換する
+    """
+
+    def __init__(self, max_cap_length: int, vocab: Vocabulary):
+        self.max_cap_length = max_cap_length
+        self.vocab = vocab
+
+    def __call__(self, tokens: list[str]) -> list[int]:
+        return torch.as_tensor(
+            [self.vocab(t) for t in tokens]
+            + [self.vocab("<SEP>")] * (self.max_cap_length - len(tokens)),
+            dtype=torch.int64,
+        )

@@ -3,6 +3,7 @@
 import datetime
 import json
 import logging
+import pickle
 import time
 from pathlib import Path
 
@@ -13,6 +14,7 @@ from tqdm import tqdm
 
 import utils
 from datasets.cc_dataset import create_dataset
+from datasets.cmc_dataset import CLEVRMultiChangeDataset
 from datasets.original_cmc_dataset import CaptionDataset
 from models import MCCFormer
 
@@ -73,6 +75,30 @@ def main() -> None:
         idx_to_word = {v: k for k, v in vocab.items()}
         num_tokens = len(vocab)
         max_seq_length = 99
+    elif cfg.data.dataset == "cmc_dataset":
+        max_seq_length = 99
+        with Path.cwd().joinpath(cfg.data.path, "vocab.pkl").open("rb") as f:
+            vocab = pickle.load(f)
+        target_transform = utils.Word2Id(max_seq_length, vocab)
+        num_tokens = len(vocab)
+
+        test_dataset = CLEVRMultiChangeDataset(
+            Path.cwd().joinpath(cfg.data.path),
+            split="test",
+            use_feature=True,
+            choose_one_caption=True,
+            img_transform=None,
+            target_transform=target_transform,
+        )
+
+        test_loader = torch.utils.data.DataLoader(
+            test_dataset,
+            batch_size=1,
+            shuffle=False,
+            num_workers=cfg.data.num_workers,
+            drop_last=False,
+        )
+    logger.info("Length of test dataset: {}".format(len(test_dataset)))
 
     # prepare model
     logger.info("Creating model")
@@ -150,6 +176,25 @@ def main() -> None:
                     end_idx=vocab["<end>"],
                     pad_idx=vocab["<pad>"],
                 )
+
+                result_captions_pos.append({"caption": output, "image_id": i + 1})
+
+            elif cfg.data.dataset == "cmc_dataset":
+                d_feature, q_feature, target = data
+                d_feature = d_feature.to(device)
+                q_feature = q_feature.to(device)
+
+                output = model(d_feature, q_feature, start_idx=vocab.word2idx["<BOS>"])
+                output = output.squeeze().to(cpu_device).tolist()
+                output = utils.decode_seq(
+                    output,
+                    vocab.idx2word,
+                    start_idx=vocab.word2idx["<BOS>"],
+                    end_idx=vocab.word2idx["<EOS>"],
+                    pad_idx=vocab.word2idx["<PAD>"],
+                )
+                output = output.replace("<SEP>", ".")
+                output += " ."
 
                 result_captions_pos.append({"caption": output, "image_id": i + 1})
 
