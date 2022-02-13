@@ -1,6 +1,7 @@
 data:
   dataset: cmc_dataset
   path: data/clevr_multi
+  captions_per_image: 5
 
   image_size: 14
   feature_dim: 1024

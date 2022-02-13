@@ -9,6 +9,7 @@ from omegaconf import OmegaConf
 from tqdm import tqdm
 
 import utils
+from datasets.cmc_dataset import CLEVRMultiChangeDataset
 from datasets.original_cmc_dataset import CaptionDataset
 
 
@@ -29,20 +30,31 @@ def main() -> None:
 
     # Data loading code
     logger.info("Creating datasets and data loaders")
-    dataset = CaptionDataset(
-        Path.cwd().joinpath(cfg.data.path),
-        cfg.data.data_name,
-        "TEST",
-        cfg.data.captions_per_image,
-        "MOSCC",
-    )
+    if cfg.data.dataset == "original_cmc_dataset":
+        dataset = CaptionDataset(
+            Path.cwd().joinpath(cfg.data.path),
+            cfg.data.data_name,
+            "TEST",
+            cfg.data.captions_per_image,
+            "MOSCC",
+        )
 
-    # Load word dict
-    with Path.cwd().joinpath(
-        cfg.data.path, "WORDMAP_3dcc_5_cap_per_img_0_min_word_freq.json"
-    ).open("r") as f:
-        word_to_idx = json.load(f)
-    idx_to_word = {v: k for k, v in word_to_idx.items()}
+        # Load word dict
+        with Path.cwd().joinpath(
+            cfg.data.path, "WORDMAP_3dcc_5_cap_per_img_0_min_word_freq.json"
+        ).open("r") as f:
+            word_to_idx = json.load(f)
+        idx_to_word = {v: k for k, v in word_to_idx.items()}
+
+    elif cfg.data.dataset == "cmc_dataset":
+        dataset = CLEVRMultiChangeDataset(
+            Path.cwd().joinpath(cfg.data.path),
+            split="test",
+            use_feature=True,
+            choose_one_caption=False,
+            img_transform=None,
+            target_transform=None,
+        )
 
     # Create COCO Caption format
     # craete coco format
@@ -63,20 +75,31 @@ def main() -> None:
     gt_dict["type"] = "captions"
     gt_dict["images"] = []
     gt_dict["annotations"] = []
-    for image_idx in tqdm(range(len(dataset) // cfg.data.captions_per_image)):
+    if cfg.data.dataset == "original_cmc_dataset":
+        dataset_length = len(dataset) // cfg.data.captions_per_image
+    else:
+        dataset_length = len(dataset)
+    for image_idx in tqdm(range(dataset_length)):
         gt_dict["images"].append({"filename": "{}.png".format(image_idx + 1), "id": image_idx + 1})
 
-        _, _, _, _, all_captions = dataset[cfg.data.captions_per_image * image_idx]
-        all_captions = all_captions.tolist()
+        if cfg.data.dataset == "original_cmc_dataset":
+            _, _, _, _, all_captions = dataset[cfg.data.captions_per_image * image_idx]
+            all_captions = all_captions.tolist()
+
+        elif cfg.data.dataset == "cmc_dataset":
+            _, _, all_captions = dataset[image_idx]
 
         for caption_idx, caption in enumerate(all_captions):
-            decoded_caption = utils.decode_seq(
-                caption,
-                idx_to_word,
-                start_idx=word_to_idx["<start>"],
-                end_idx=word_to_idx["<end>"],
-                pad_idx=word_to_idx["<pad>"],
-            )
+            if cfg.data.dataset == "original_cmc_dataset":
+                decoded_caption = utils.decode_seq(
+                    caption,
+                    idx_to_word,
+                    start_idx=word_to_idx["<start>"],
+                    end_idx=word_to_idx["<end>"],
+                    pad_idx=word_to_idx["<pad>"],
+                )
+            elif cfg.data.dataset == "cmc_dataset":
+                decoded_caption = " ".join(caption).replace("<SEP>", ".").replace("<EOS>", ".")
             gt_dict["annotations"].append(
                 {
                     "caption": decoded_caption,
