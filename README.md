@@ -1,7 +1,7 @@
 # MCCFormers
 
 Unofficial implementation of MCCFormers proposed in the paper:
-- Y. Qiu et al. Describing and Localizing Multiple Changes with Transformers. arXiv, 2021. ([arXiv](https://arxiv.org/abs/2103.14146))
+- Y. Qiu et al. Describing and Localizing Multiple Changes with Transformers. ICCV, 2021. ([arXiv](https://arxiv.org/abs/2103.14146))
 
 # Requirements
 
@@ -25,17 +25,17 @@ poetry install
 The following commands can be used to train and evaluate the model.
 
 ```
-poetry run python train.py \
-    hydra.run.dir=${OUTPUT_DIR} \
-    data.batch_size=${BATCH_SIZE} \
-    model.encoder_type=${ENCODER_TYPE}  # encoder type is 'D' or 'S'
+poetry run python3 train.py \
+    ${CONFIG_PATH} \
+    -o model.encoder_type=${ENCODER_TYPE}  # encoder type is 'D' or 'S'
 ```
 
 ```
-poetry run python test.py \
-    hydra.run.dir=${OUTPUT_DIR} \
-    resume=${PRETRAINED_MODEL_PATH} \
-    model.encoder_type=${ENCODER_TYPE}  # encoder type is 'D' or 'S'
+poetry run python3 test.py \
+    ${CONFIG_PATH} \
+    -o \
+        resume=${PRETRAINED_MODEL_PATH} \
+        model.encoder_type=${ENCODER_TYPE}  # encoder type is 'D' or 'S'
 ```
 
 Running `test.py` will generate a JSON file that contains the inference results.
