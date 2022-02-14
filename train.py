@@ -3,7 +3,6 @@
 import datetime
 import json
 import logging
-import pickle
 import random
 import time
 from pathlib import Path
@@ -118,8 +117,8 @@ def main() -> None:
 
     elif cfg.data.dataset == "cmc_dataset":
         max_seq_length = 99
-        with Path.cwd().joinpath(cfg.data.path, "vocab.pkl").open("rb") as f:
-            vocab = pickle.load(f)
+        with Path.cwd().joinpath(cfg.data.vocab_path).open("r") as f:
+            vocab = json.load(f)
         target_transform = utils.Word2Id(max_seq_length, vocab)
         num_tokens = len(vocab)
 

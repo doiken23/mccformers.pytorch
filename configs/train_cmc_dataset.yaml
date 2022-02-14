@@ -2,6 +2,7 @@ data:
   dataset: cmc_dataset
   path: data/clevr_multi
   captions_per_image: 5
+  vocab_path: data/original_clevr_multi/WORDMAP_3dcc_5_cap_per_img_0_min_word_freq.json
 
   image_size: 14
   feature_dim: 1024

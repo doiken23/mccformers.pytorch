@@ -3,7 +3,6 @@
 import datetime
 import json
 import logging
-import pickle
 import time
 from pathlib import Path
 
@@ -52,7 +51,16 @@ def main() -> None:
         )
         num_tokens = test_dataset.vocab_size
         max_seq_length = test_dataset.max_seq_length
+
     elif cfg.data.dataset == "original_cmc_dataset":
+        max_seq_length = 99
+        with Path.cwd().joinpath(cfg.data.path, "WORDMAP_{}.json".format(cfg.data.data_name)).open(
+            "r"
+        ) as f:
+            vocab = json.load(f)
+        idx_to_word = {v: k for k, v in vocab.items()}
+        num_tokens = len(vocab)
+
         test_dataset = CaptionDataset(
             Path.cwd().joinpath(cfg.data.path),
             cfg.data.data_name,
@@ -68,18 +76,12 @@ def main() -> None:
             drop_last=False,
         )
 
-        with Path.cwd().joinpath(cfg.data.path, "WORDMAP_{}.json".format(cfg.data.data_name)).open(
-            "r"
-        ) as f:
-            vocab = json.load(f)
-        idx_to_word = {v: k for k, v in vocab.items()}
-        num_tokens = len(vocab)
-        max_seq_length = 99
     elif cfg.data.dataset == "cmc_dataset":
         max_seq_length = 99
-        with Path.cwd().joinpath(cfg.data.path, "vocab.pkl").open("rb") as f:
-            vocab = pickle.load(f)
+        with Path.cwd().joinpath(cfg.data.vocab_path).open("r") as f:
+            vocab = json.load(f)
         target_transform = utils.Word2Id(max_seq_length, vocab)
+        idx_to_word = {v: k for k, v in vocab.items()}
         num_tokens = len(vocab)
 
         test_dataset = CLEVRMultiChangeDataset(
@@ -159,7 +161,7 @@ def main() -> None:
                 caption_neg = utils.decode_seq(outputs_neg[0].tolist(), test_dataset.idx_to_word)
                 result_captions_neg.append({"caption": caption_neg, "image_id": image_id + "_n"})
 
-            if cfg.data.dataset == "original_cmc_dataset":
+            elif cfg.data.dataset == "original_cmc_dataset":
                 if i % cfg.data.captions_per_image != 0:
                     continue
 
@@ -188,13 +190,11 @@ def main() -> None:
                 output = output.squeeze().to(cpu_device).tolist()
                 output = utils.decode_seq(
                     output,
-                    vocab.idx2word,
-                    start_idx=vocab.word2idx["<BOS>"],
-                    end_idx=vocab.word2idx["<EOS>"],
-                    pad_idx=vocab.word2idx["<PAD>"],
+                    idx_to_word,
+                    start_idx=vocab["<start>"],
+                    end_idx=vocab["<end>"],
+                    pad_idx=vocab["<pad>"],
                 )
-                output = output.replace("<SEP>", ".")
-                output += " ."
 
                 result_captions_pos.append({"caption": output, "image_id": i + 1})
 

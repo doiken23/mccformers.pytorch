@@ -20,11 +20,12 @@ _id_dict = {"train": _ids[:40000], "val": _ids[40000:50000], "test": _ids[50000:
 def _process_sentence(sentence: str) -> list[str]:
     """
     Sentence is processed as follows:
-        - converted into lower cases
+        # - converted into lower cases
         - removed punctuations
         - tokenized
     """
-    return sentence.lower().translate(str.maketrans("", "", string.punctuation)).split()
+    # return sentence.lower().translate(str.maketrans("", "", string.punctuation)).split()
+    return sentence.translate(str.maketrans("", "", string.punctuation)).split()
 
 
 class CLEVRMultiChangeDataset(Dataset):
@@ -129,11 +130,9 @@ class CLEVRMultiChangeDataset(Dataset):
             out_captions (str): concatenated captions
 
         """
-        out_caption = ["<BOS>"]
+        out_caption = ["<start>"]
         for i, caption in enumerate(captions):
             out_caption += caption
-            if i < len(captions) - 1:
-                out_caption.append("<SEP>")
-            else:
-                out_caption.append("<EOS>")
+            out_caption.append(".")
+        out_caption.append("<end>")
         return out_caption
