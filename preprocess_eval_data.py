@@ -99,7 +99,12 @@ def main() -> None:
                     pad_idx=word_to_idx["<pad>"],
                 )
             elif cfg.data.dataset == "cmc_dataset":
-                decoded_caption = " ".join(caption).replace("<SEP>", ".").replace("<EOS>", ".")
+                decoded_caption = (
+                    " ".join(caption)
+                    .replace("<BOS>", "")
+                    .replace("<SEP>", ".")
+                    .replace("<EOS>", ".")
+                )
             gt_dict["annotations"].append(
                 {
                     "caption": decoded_caption,
