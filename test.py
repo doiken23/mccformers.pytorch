@@ -186,7 +186,7 @@ def main() -> None:
                 d_feature = d_feature.to(device)
                 q_feature = q_feature.to(device)
 
-                output = model(d_feature, q_feature, start_idx=vocab.word2idx["<BOS>"])
+                output = model(d_feature, q_feature, start_idx=vocab["<start>"])
                 output = output.squeeze().to(cpu_device).tolist()
                 output = utils.decode_seq(
                     output,
